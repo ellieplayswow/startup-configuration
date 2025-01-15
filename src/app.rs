@@ -14,8 +14,8 @@ use cosmic::widget::{self, icon};
 use cosmic::{theme, Application, ApplicationExt, Element};
 use futures_util::SinkExt;
 
-const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
-const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
+//const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
+//const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
@@ -41,9 +41,6 @@ pub enum Message {
 
     ApplicationSearch(String),
     AddApplication(Program),
-
-    SaveSettings,
-    LoadSettings
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -160,7 +157,7 @@ impl Application for AppModel {
                 s.push_str(&*program.name);
                 //s.push_str(&*program.exec);
 
-                let mut exec = String::from(&*program.settings.exec);
+                let exec = String::from(&*program.settings.exec);
 
                 list.add(
                     cosmic::iced::widget::row![
@@ -269,6 +266,9 @@ impl Application for AppModel {
                 for program in self.selected_programs.as_deref().unwrap() {
                     settings.push(&program.settings);
                 }
+
+                //todo: refactor
+                #[allow(deprecated)]
                 let mut home_dir = std::env::home_dir().unwrap_or(PathBuf::from("/home/"));
                 home_dir.push(".config");
                 home_dir.push("cosmic-startup.ron");
@@ -278,8 +278,6 @@ impl Application for AppModel {
                     return cosmic::task::message(ToggleContextPage(ContextPage::AddApplication));
                 }
             }
-            Message::SaveSettings => {},
-            Message::LoadSettings => {},
         }
         Task::none()
     }
@@ -289,7 +287,7 @@ impl AppModel {
 
     /// Updates the header and window titles.
     pub fn update_title(&mut self) -> Task<Message> {
-        let mut window_title = fl!("app-title");
+        let window_title = fl!("app-title");
 
         if let Some(id) = self.core.main_window_id() {
             self.set_window_title(window_title, id)

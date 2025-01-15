@@ -26,6 +26,8 @@ fn main() -> cosmic::iced::Result {
     // Enable localizations to be applied.
     i18n::init(&requested_languages);
 
+    //todo: refactor
+    #[allow(deprecated)]
     let mut home_dir = std::env::home_dir().unwrap_or(PathBuf::from("/home/"));
     home_dir.push(".config");
     home_dir.push("cosmic-startup.ron");
@@ -63,7 +65,8 @@ fn main() -> cosmic::iced::Result {
             }
             let _ = cmd.spawn();
         }
-        iced::Result::Ok(())
+        std::process::exit(0);
+        //iced::Result::Ok(())
     } else {
         // Starts the application's event loop with `()` as the application's flags.
         cosmic::app::run::<app::AppModel>(settings, selected_programs)
