@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: GPL-3
 
+use std::fs;
+use std::path::PathBuf;
+use crate::app::Message::ToggleContextPage;
 use crate::config::Config;
 use crate::fl;
+use crate::programs::{get_installed_programs, get_program_list, Program, ProgramSettings};
 use cosmic::app::{context_drawer, Core, Task};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
-use cosmic::iced::{Alignment, Length, Subscription};
-use cosmic::widget::{self, icon, list_column, menu};
-use cosmic::{cosmic_theme, theme, Application, ApplicationExt, Apply, Element};
+use cosmic::iced::{Length, Subscription};
+use cosmic::widget::{self, icon};
+use cosmic::{theme, Application, ApplicationExt, Element};
 use futures_util::SinkExt;
-use std::collections::HashMap;
-use cosmic::iced_widget::iced;
-use crate::app::Message::ToggleContextPage;
-use crate::programs::{get_installed_programs, Program};
 
 const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
@@ -40,7 +40,10 @@ pub enum Message {
     ToggleContextPage(ContextPage),
 
     ApplicationSearch(String),
-    AddApplication(Program)
+    AddApplication(Program),
+
+    SaveSettings,
+    LoadSettings
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -65,7 +68,7 @@ impl Application for AppModel {
     type Executor = cosmic::executor::Default;
 
     /// Data that your application receives to its init method.
-    type Flags = ();
+    type Flags = Vec<ProgramSettings>;
 
     /// Messages which the application and its widgets will emit.
     type Message = Message;
@@ -100,7 +103,10 @@ impl Application for AppModel {
                     config
                 }))
                 .unwrap_or_default(),
-            selected_programs: None,
+            selected_programs: match _flags.len() {
+                0 => None,
+                _ => Some(get_program_list(&_flags))
+            }
         };
 
         // Create a startup command that sets the window title.
@@ -136,7 +142,7 @@ impl Application for AppModel {
                         list
                     ],
                     Message::ToggleContextPage(ContextPage::AddApplication)
-                ).title("Add Application")
+                ).title(fl!("add-application"))
             }
         })
     }
@@ -171,9 +177,9 @@ impl Application for AppModel {
         else {
             list_col = list_col.add(
                 cosmic::iced::widget::column![
-                        widget::text::title3("No applications selected"),
-                        widget::text::caption("Press the + button to add a new application")
-                    ].width(Length::Fill).align_x(Horizontal::Center)
+                    widget::text::title3(fl!("no-applications-selected")),
+                    widget::text::caption(fl!("no-applications-caption"))
+                ].width(Length::Fill).align_x(Horizontal::Center)
             );
         }
 
@@ -184,7 +190,7 @@ impl Application for AppModel {
                     widget::text::text(fl!("application-description")),
                     widget::Space::with_height(theme::active().cosmic().space_l()),
                     cosmic::iced::widget::column![
-                        widget::button::suggested("Add Application").trailing_icon(icon::from_name("list-add-symbolic")).on_press(Message::ToggleContextPage(ContextPage::AddApplication)),
+                        widget::button::suggested(fl!("add-application")).trailing_icon(icon::from_name("list-add-symbolic")).on_press(Message::ToggleContextPage(ContextPage::AddApplication)),
                     ].width(Length::Fill).align_x(Horizontal::Right).padding(theme::active().cosmic().space_s()),
                     widget::scrollable(list_col).height(Length::Fill)
             ]
@@ -196,15 +202,6 @@ impl Application for AppModel {
             .align_y(Vertical::Top)
             .padding(cosmic::theme::active().cosmic().space_l())
             .into()
-
-        //cosmic::iced::widget::column((0..5).map(|i| cosmic::iced::widget::text!("Item {i}").into())).into()
-        /*widget::text::title1(fl!("welcome"))
-            .apply(widget::container)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .align_x(Horizontal::Left)
-            .align_y(Vertical::Top)
-            .into()*/
     }
 
     /// Register subscriptions for this application.
@@ -265,12 +262,24 @@ impl Application for AppModel {
             Message::AddApplication(program) => {
                 let mut new_programs = self.selected_programs.take().unwrap_or(Vec::new());
                 new_programs.push(program);
+
                 self.selected_programs = Some(new_programs);
+
+                let mut settings = Vec::new();
+                for program in self.selected_programs.as_deref().unwrap() {
+                    settings.push(&program.settings);
+                }
+                let mut home_dir = std::env::home_dir().unwrap_or(PathBuf::from("/home/"));
+                home_dir.push(".config");
+                home_dir.push("cosmic-startup.ron");
+                fs::write(&home_dir, ron::to_string(&settings).unwrap()).unwrap();
 
                 if self.context_page == ContextPage::AddApplication {
                     return cosmic::task::message(ToggleContextPage(ContextPage::AddApplication));
                 }
             }
+            Message::SaveSettings => {},
+            Message::LoadSettings => {},
         }
         Task::none()
     }

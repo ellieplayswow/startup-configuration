@@ -1,9 +1,9 @@
-use std::collections::HashSet;
-use std::iter::Map;
 use freedesktop_desktop_entry as fde;
 use freedesktop_desktop_entry::DesktopEntry;
+use std::collections::HashSet;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProgramSettings {
     pub exec: String,
     pub args: Vec<String>,
