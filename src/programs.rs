@@ -39,6 +39,10 @@ pub fn get_installed_programs() -> Vec<Program> {
                 return None;
             }
 
+            if de.no_display() {
+                return None;
+            }
+
             // render name
             let mut name = String::new();
             name.push_str(de.name(&[] as &[&str]).unwrap().as_ref());

@@ -12,6 +12,7 @@ use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::{Length, Subscription};
 use cosmic::widget::{self, icon};
 use cosmic::{theme, Application, ApplicationExt, Element};
+use cosmic::style::Button;
 use futures_util::SinkExt;
 
 //const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
@@ -53,10 +54,12 @@ fn application_item(icon_size: u16, title_size: u16, program: &Program) -> Eleme
     cosmic::iced::widget::row![
         icon::from_name(&*program.icon).size(icon_size),
         cosmic::iced::widget::column![
-            widget::text::title3(&program.name).size(title_size),
+            widget::text::title4(&program.name).size(title_size),
             widget::text::caption(&program.settings.exec)
         ]
-    ].spacing(theme::active().cosmic().space_m()).into()
+    ].spacing(theme::active().cosmic().space_m())
+        .align_y(Vertical::Center)
+        .into()
 }
 
 /// Create a COSMIC application from the app model
@@ -123,13 +126,16 @@ impl Application for AppModel {
 
                 let search_input = &self.application_search.trim().to_lowercase();
 
-                let mut list = widget::list_column();
+                let mut list = widget::list_column().padding(theme::active().cosmic().space_xs()).list_item_padding(0);
 
                 for program in self.installed_programs.iter() {
                     if search_input.is_empty() || (program.name).to_lowercase().contains(search_input) {
-                        list = list.add(widget::button::custom(
-                            application_item(theme::active().cosmic().space_m(), theme::active().cosmic().space_l(), program)
-                        ).on_press(Message::AddApplication(program.clone())));
+                        list = list.add(
+                            widget::button::custom(
+                            application_item(32, 24, program)
+                            ).on_press(Message::AddApplication(program.clone()))
+                                .width(Length::Fill).class(Button::ListItem)
+                        );
                     }
                 }
 
@@ -137,7 +143,7 @@ impl Application for AppModel {
                     cosmic::iced::widget::column![
                         search,
                         list
-                    ],
+                    ].spacing(theme::active().cosmic().space_m()),
                     Message::ToggleContextPage(ContextPage::AddApplication)
                 ).title(fl!("add-application"))
             }
@@ -162,12 +168,11 @@ impl Application for AppModel {
                 list.add(
                     cosmic::iced::widget::row![
                     cosmic::widget::icon::from_name(&*program.icon).size(theme::active().cosmic().space_l()),
-                    widget::Space::with_width(theme::active().cosmic().space_m()),
                     cosmic::iced::widget::column![
                         widget::text::title3(s),
                         widget::text::caption(exec)
                     ]
-                ]
+                ].align_y(Vertical::Center).spacing(theme::active().cosmic().space_m()),
                 )
             });
         }
@@ -185,10 +190,10 @@ impl Application for AppModel {
             cosmic::iced::widget::column![
                     widget::text::title1(fl!("window-title")),
                     widget::text::text(fl!("application-description")),
-                    widget::Space::with_height(theme::active().cosmic().space_l()),
+                    //widget::Space::with_height(theme::active().cosmic().space_s()),
                     cosmic::iced::widget::column![
                         widget::button::suggested(fl!("add-application")).trailing_icon(icon::from_name("list-add-symbolic")).on_press(Message::ToggleContextPage(ContextPage::AddApplication)),
-                    ].width(Length::Fill).align_x(Horizontal::Right).padding(theme::active().cosmic().space_s()),
+                    ].width(Length::Fill).align_x(Horizontal::Right).padding([theme::active().cosmic().space_s(), 0, theme::active().cosmic().space_s(), 0]),
                     widget::scrollable(list_col).height(Length::Fill)
             ]
         )
@@ -197,7 +202,7 @@ impl Application for AppModel {
             .height(Length::Fill)
             .align_x(Horizontal::Left)
             .align_y(Vertical::Top)
-            .padding(cosmic::theme::active().cosmic().space_l())
+            .padding([0, theme::active().cosmic().space_l(), theme::active().cosmic().space_m(), theme::active().cosmic().space_l()])
             .into()
     }
 

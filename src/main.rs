@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3
 
 use std::fs;
+use std::io::Stdin;
 use std::path::PathBuf;
+use std::process::Stdio;
 use serde::{Deserialize, Serialize};
 use clap::{Parser, ArgAction};
 use cosmic::iced;
@@ -63,7 +65,7 @@ fn main() -> cosmic::iced::Result {
             for arg in &program.args {
                 cmd.arg(arg);
             }
-            let _ = cmd.spawn();
+            let _ = cmd.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn();
         }
         std::process::exit(0);
         //iced::Result::Ok(())
