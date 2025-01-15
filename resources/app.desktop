@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Cosmic Startup
+Comment=set startup scripts/programs
+Type=Application
+Icon=best.ellie.CosmicStartup
+Exec=cosmic-startup %F
+Terminal=false
+StartupNotify=true
+Categories=COSMIC
+Keywords=COSMIC
+MimeType=

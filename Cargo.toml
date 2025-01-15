@@ -1,0 +1,33 @@
+[package]
+name = "cosmic-startup"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3"
+description = "set startup scripts/programs"
+repository = "https://github.com/ellieplayswow/cosmic-startup"
+
+[build-dependencies]
+vergen = { version = "8", features = ["git", "gitcl"] }
+
+[dependencies]
+futures-util = "0.3.31"
+i18n-embed-fl = "0.9.2"
+open = "5.3.0"
+rust-embed = "8.5.0"
+tokio = { version = "1.41.0", features = ["full"] }
+freedesktop-desktop-entry = "0.6.2"
+
+[dependencies.i18n-embed]
+version = "0.15"
+features = ["fluent-system", "desktop-requester"]
+
+[dependencies.libcosmic]
+git = "https://github.com/pop-os/libcosmic.git"
+# See https://github.com/pop-os/libcosmic/blob/master/Cargo.toml for available features.
+features = ["a11y", "dbus-config", "multi-window", "single-instance", "tokio", "winit", "wayland", "wgpu", "desktop"]
+
+# Uncomment to test a locally-cloned libcosmic
+# [patch.'https://github.com/pop-os/libcosmic']
+# libcosmic = { path = "../libcosmic" }
+# cosmic-config = { path = "../libcosmic/cosmic-config" }
+# cosmic-theme = { path = "../libcosmic/cosmic-theme" }
