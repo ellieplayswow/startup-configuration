@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3
 
 use std::fs;
-use std::io::Stdin;
 use std::path::PathBuf;
 use std::process::Stdio;
 use serde::{Deserialize, Serialize};
 use clap::{Parser, ArgAction};
-use cosmic::iced;
 use crate::programs::ProgramSettings;
 
 mod app;

@@ -10,7 +10,7 @@ use cosmic::app::{context_drawer, Core, Task};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::{Length, Subscription};
-use cosmic::widget::{self, icon};
+use cosmic::widget::{self, horizontal_space, icon};
 use cosmic::{theme, Application, ApplicationExt, Element};
 use cosmic::style::Button;
 use futures_util::SinkExt;
@@ -31,6 +31,8 @@ pub struct AppModel {
 
     installed_programs: Vec<Program>,
     selected_programs: Option<Vec<Program>>,
+
+    program_to_remove: Option<usize>
 }
 
 /// Messages emitted by the application and its widgets.
@@ -42,6 +44,10 @@ pub enum Message {
 
     ApplicationSearch(String),
     AddApplication(Program),
+
+    RemoveApplication(usize),
+    RemoveApplicationConfirm(usize),
+    RemoveApplicationCancel
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -60,6 +66,20 @@ fn application_item(icon_size: u16, title_size: u16, program: &Program) -> Eleme
     ].spacing(theme::active().cosmic().space_m())
         .align_y(Vertical::Center)
         .into()
+}
+
+fn save_settings(programs: &Vec<Program>) {
+    let mut settings = Vec::new();
+    for program in programs {
+        settings.push(&program.settings);
+    }
+
+    //todo: refactor
+    #[allow(deprecated)]
+    let mut home_dir = std::env::home_dir().unwrap_or(PathBuf::from("/home/"));
+    home_dir.push(".config");
+    home_dir.push("cosmic-startup.ron");
+    fs::write(&home_dir, ron::to_string(&settings).unwrap()).unwrap();
 }
 
 /// Create a COSMIC application from the app model
@@ -106,13 +126,25 @@ impl Application for AppModel {
             selected_programs: match _flags.len() {
                 0 => None,
                 _ => Some(get_program_list(&_flags))
-            }
+            },
+            program_to_remove: None
         };
 
         // Create a startup command that sets the window title.
         let command = app.update_title();
 
         (app, command)
+    }
+
+    fn dialog(&self) -> Option<Element<Self::Message>> {
+        if self.program_to_remove.is_some() {
+            return Some(widget::dialog().title(fl!("dialog-remove-application-title"))
+                .icon(icon::from_name("dialog-error-symbolic").size(64))
+                .body(fl!("dialog-remove-application-body"))
+                .secondary_action(widget::button::destructive(fl!("action-yes")).on_press(Message::RemoveApplicationConfirm(self.program_to_remove.unwrap())))
+                .primary_action(widget::button::suggested(fl!("action-no")).on_press(Message::RemoveApplicationCancel)).into());
+        }
+        None
     }
 
     fn context_drawer(&self) -> Option<context_drawer::ContextDrawer<Self::Message>> {
@@ -158,7 +190,7 @@ impl Application for AppModel {
         let mut list_col = widget::list_column().style(theme::Container::List);
 
         if self.selected_programs.is_some() {
-            list_col = self.selected_programs.as_deref().unwrap().iter().fold(list_col, |list, program| {
+            list_col = self.selected_programs.as_deref().unwrap().iter().enumerate().fold(list_col, |list, (idx, program)| {
                 let mut s = String::new();
                 s.push_str(&*program.name);
                 //s.push_str(&*program.exec);
@@ -171,7 +203,9 @@ impl Application for AppModel {
                     cosmic::iced::widget::column![
                         widget::text::title3(s),
                         widget::text::caption(exec)
-                    ]
+                    ],
+                    horizontal_space(),
+                    widget::button::icon(icon::from_name("window-close-symbolic")).class(Button::Destructive).on_press(Message::RemoveApplication(idx))
                 ].align_y(Vertical::Center).spacing(theme::active().cosmic().space_m()),
                 )
             });
@@ -272,16 +306,38 @@ impl Application for AppModel {
                     settings.push(&program.settings);
                 }
 
-                //todo: refactor
-                #[allow(deprecated)]
-                let mut home_dir = std::env::home_dir().unwrap_or(PathBuf::from("/home/"));
-                home_dir.push(".config");
-                home_dir.push("cosmic-startup.ron");
-                fs::write(&home_dir, ron::to_string(&settings).unwrap()).unwrap();
+                save_settings(&self.selected_programs.clone().unwrap());
 
                 if self.context_page == ContextPage::AddApplication {
                     return cosmic::task::message(ToggleContextPage(ContextPage::AddApplication));
                 }
+            },
+            Message::RemoveApplication(idx) => {
+                if self.selected_programs.is_some() && self.program_to_remove.is_none() {
+                    self.program_to_remove = Some(idx);
+                }
+            },
+            Message::RemoveApplicationConfirm(idx) => {
+                if self.selected_programs.is_some() && self.program_to_remove.is_some() {
+                    let mut new_programs = self.selected_programs.take().unwrap();
+                    if new_programs.len() > idx {
+                        new_programs.remove(idx);
+
+                        self.selected_programs = Some(new_programs.clone());
+                        save_settings(&self.selected_programs.clone().unwrap());
+
+                        // help reset UI
+                        if new_programs.len() == 0 {
+                            self.selected_programs = None;
+                        }
+                    }
+
+                    // always unset program_to_remove, in case we end up in some weird funky edge case
+                    self.program_to_remove = None;
+                }
+            },
+            Message::RemoveApplicationCancel => {
+                self.program_to_remove = None;
             }
         }
         Task::none()
