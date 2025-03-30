@@ -1,10 +1,10 @@
 [package]
-name = "cosmic-startup"
+name = "startup-configuration"
 version = "0.1.0"
 edition = "2021"
 license = "GPL-3"
 description = "set startup scripts/programs"
-repository = "https://github.com/ellieplayswow/cosmic-startup"
+repository = "https://github.com/ellieplayswow/startup-configuration"
 
 [build-dependencies]
 vergen = { version = "8", features = ["git", "gitcl"] }
@@ -13,11 +13,8 @@ vergen = { version = "8", features = ["git", "gitcl"] }
 futures-util = "0.3.31"
 i18n-embed-fl = "0.9.2"
 rust-embed = "8.5.0"
-freedesktop-desktop-entry = "0.6.2"
-ron = "0.8"
-serde = { version = "1.0.217", features = ["derive"] }
-clap = { version = "4.5.26", features = ["derive"] }
-shell-words = "1.1.0"
+freedesktop-desktop-entry = "0.7.9"
+dirs = "6.0.0"
 
 [dependencies.i18n-embed]
 version = "0.15"

@@ -2,8 +2,8 @@
 Name=Cosmic Startup
 Comment=set startup scripts/programs
 Type=Application
-Icon=best.ellie.CosmicStartup
-Exec=cosmic-startup %F
+Icon=best.ellie.StartupConfiguration
+Exec=startup-configuration %F
 Terminal=false
 StartupNotify=true
 Categories=COSMIC
