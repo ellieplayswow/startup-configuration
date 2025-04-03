@@ -23,7 +23,7 @@ features = ["fluent-system", "desktop-requester"]
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic.git"
 # See https://github.com/pop-os/libcosmic/blob/master/Cargo.toml for available features.
-features = ["a11y", "dbus-config", "multi-window", "single-instance", "tokio", "winit", "wayland", "wgpu", "desktop"]
+features = ["xdg-portal", "a11y", "dbus-config", "multi-window", "single-instance", "tokio", "winit", "wayland", "wgpu", "desktop"]
 
 # Uncomment to test a locally-cloned libcosmic
 # [patch.'https://github.com/pop-os/libcosmic']

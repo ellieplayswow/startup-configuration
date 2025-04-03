@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3
 
-use crate::apps::{get_installed_programs, get_startup_applications, DirectoryType};
+use crate::apps::{get_installed_applications, get_startup_applications, DirectoryType};
 use crate::config::Config;
 use crate::fl;
 use cosmic::app::{context_drawer, Core, Task};
@@ -11,10 +11,12 @@ use cosmic::iced_core::widget::Text;
 use cosmic::style::Button;
 use cosmic::theme::Container::List;
 use cosmic::widget::{self, button, column, icon, list_column, row, vertical_space};
-use cosmic::{theme, Application, ApplicationExt, Element, Renderer, Theme};
+use cosmic::{theme, Application, ApplicationExt, Apply, Element, Renderer, Theme};
 use freedesktop_desktop_entry::DesktopEntry;
-use futures_util::SinkExt;
+use futures_util::{FutureExt, SinkExt};
 use std::collections::HashMap;
+use std::path::PathBuf;
+use cosmic::dialog::file_chooser::FileFilter;
 //const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 //const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
@@ -35,7 +37,7 @@ pub struct AppModel {
     apps_per_type: HashMap<DirectoryType, Vec<DesktopEntry>>,
 
     selected_type: Option<DirectoryType>,
-    selected_index: Option<usize>,
+    selected_app: Option<DesktopEntry>,
 
     // global search
     global_search: Option<String>,
@@ -50,16 +52,24 @@ pub enum Message {
     ToggleContextPage(ContextPage),
 
     ApplicationSearch(String),
+
+    AddApplicationActivate(DirectoryType),
     AddApplication(DesktopEntry),
 
-    RemoveApplication(usize),
-    RemoveApplicationConfirm(usize),
+    RemoveApplication(DirectoryType, DesktopEntry),
+    RemoveApplicationConfirm,
     RemoveApplicationCancel,
 
     // global search
     GlobalSearchActivate,
     GlobalSearchInput(String),
     GlobalSearchClear,
+
+    ChooseScriptActivate(DirectoryType),
+    ChooseScriptConfirm(String),
+    ChooseScriptCancel,
+
+    RefreshApps(DirectoryType)
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -109,7 +119,7 @@ impl Application for AppModel {
             core,
             context_page: ContextPage::default(),
             locales: locales.clone(),
-            installed_apps: get_installed_programs(locales),
+            installed_apps: get_installed_applications(locales),
             application_search: String::new(),
             // Optional configuration file for an application.
             config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
@@ -121,7 +131,7 @@ impl Application for AppModel {
             apps_per_type: apps_hash,
 
             selected_type: None,
-            selected_index: None,
+            selected_app: None,
 
             global_search: None,
             global_search_id: widget::Id::unique(),
@@ -134,17 +144,17 @@ impl Application for AppModel {
     }
 
     fn dialog(&self) -> Option<Element<Self::Message>> {
-        if self.selected_index.is_some() {
+        if let Some(selected_app) = &self.selected_app {
             return Some(
                 widget::dialog()
-                    .title(fl!("dialog-remove-application-title"))
+                    .title(fl!("dialog-remove-application"))
                     .icon(icon::from_name("dialog-error-symbolic").size(64))
-                    .body(fl!("dialog-remove-application-body"))
-                    .secondary_action(widget::button::destructive(fl!("action-yes")).on_press(
-                        Message::RemoveApplicationConfirm(self.selected_index.unwrap()),
+                    .body(fl!("dialog-remove-application", "body"))
+                    .secondary_action(widget::button::destructive(fl!("actions", "yes")).on_press(
+                        Message::RemoveApplicationConfirm,
                     ))
                     .primary_action(
-                        widget::button::suggested(fl!("action-no"))
+                        widget::button::suggested(fl!("actions", "no"))
                             .on_press(Message::RemoveApplicationCancel),
                     )
                     .into(),
@@ -170,38 +180,36 @@ impl Application for AppModel {
                     .padding(theme::active().cosmic().space_xs())
                     .list_item_padding(0);
 
-                for program in self.installed_apps.iter() {
+                for application in self.installed_apps.iter() {
                     if search_input.is_empty()
-                        || (program
+                        || (application
                             .name(&freedesktop_desktop_entry::get_languages_from_env())
                             .unwrap_or("".into()))
                         .to_lowercase()
                         .contains(search_input)
                     {
-                        let mut app_name = program.clone().appid;
+                        let mut app_name = application.clone().appid;
 
-                        if let Some(name) = &program.name(&self.locales) {
+                        if let Some(name) = &application.name(&self.locales) {
                             app_name = name.to_string();
                         }
 
-                        let icon_name = program.icon().unwrap_or("application-default");
+                        let icon_name = application.icon().unwrap_or("application-default");
 
                         let app_item_row = cosmic::iced::widget::row![
-                            icon::from_name(icon_name).size(32),
+                            icon::from_name(icon_name).size(24),
                             cosmic::iced::widget::column![
-                                widget::text::title4(app_name).size(24),
-                                widget::text::caption(program.exec().unwrap_or(""))
+                                widget::text::heading(app_name),
+                                exec_line(String::from(application.exec().unwrap_or("")))
                             ]
+                            .width(Length::Fill),
+                            widget::button::text(fl!("actions", "add"))
+                                .on_press(Message::AddApplication(application.clone()))
                         ]
-                        .spacing(theme::active().cosmic().space_m())
+                        .spacing(theme::active().cosmic().space_xs())
                         .align_y(Vertical::Center);
 
-                        list = list.add(
-                            widget::button::custom(app_item_row)
-                                .on_press(Message::AddApplication(program.clone()))
-                                .width(Length::Fill)
-                                .class(Button::ListItem),
-                        );
+                        list = list.add(app_item_row);
                     }
                 }
 
@@ -328,7 +336,8 @@ impl Application for AppModel {
                                     .spacing(space_xs)
                                     .push(
                                         button::icon(icon::from_name("edit-delete-symbolic"))
-                                            .extra_small(),
+                                            .extra_small()
+                                            .on_press(Message::RemoveApplication(directory_type.clone(), app.clone())),
                                     )
                                     .push(
                                         button::icon(icon::from_name("view-more-symbolic"))
@@ -351,14 +360,13 @@ impl Application for AppModel {
                                     .push(
                                         widget::button::standard(fl!("add-script")).trailing_icon(
                                             icon::from_name("window-pop-out-symbolic"),
-                                        ),
+                                        )
+                                            .on_press(Message::ChooseScriptActivate(directory_type.clone())),
                                     )
                                     .push(
                                         widget::button::suggested(fl!("add-application"))
                                             .trailing_icon(icon::from_name("list-add-symbolic"))
-                                            .on_press(Message::ToggleContextPage(
-                                                ContextPage::AddApplication,
-                                            )),
+                                            .on_press(Message::AddApplicationActivate(directory_type.clone())),
                                     ),
                             )
                             .width(Length::Fill)
@@ -459,49 +467,77 @@ impl Application for AppModel {
             Message::ApplicationSearch(search) => {
                 self.application_search = search;
             }
+            Message::AddApplicationActivate(directory_type) => {
+                self.selected_type = Some(directory_type);
+                return cosmic::task::message(crate::app::Message::ToggleContextPage(ContextPage::AddApplication));
+            }
             Message::AddApplication(desktop_entry) => {
-                /*let mut new_programs = self.selected_programs.take().unwrap_or(Vec::new());
-                new_programs.push(program);
+                if let Some(directory_type) = &self.selected_type {
+                    let mut file_name = desktop_entry.clone().appid;
+                    file_name.push_str(".desktop");
 
-                self.selected_programs = Some(new_programs);
+                    let directories: Vec<PathBuf> = directory_type.clone().into();
 
-                let mut settings = Vec::new();
-                for program in self.selected_programs.as_deref().unwrap() {
-                    settings.push(&program.settings);
-                }
+                    let directory_to_target = directories.get(0).expect("Always at least one directory");
 
-                save_settings(&self.selected_programs.clone().unwrap());
-
-                if self.context_page == ContextPage::AddApplication {
-                    return cosmic::task::message(ToggleContextPage(ContextPage::AddApplication));
-                }*/
-            }
-            Message::RemoveApplication(idx) => {
-                /*if self.selected_programs.is_some() && self.program_to_remove.is_none() {
-                    self.program_to_remove = Some(idx);
-                }*/
-            }
-            Message::RemoveApplicationConfirm(idx) => {
-                /*if self.selected_programs.is_some() && self.program_to_remove.is_some() {
-                    let mut new_programs = self.selected_programs.take().unwrap();
-                    if new_programs.len() > idx {
-                        new_programs.remove(idx);
-
-                        self.selected_programs = Some(new_programs.clone());
-                        save_settings(&self.selected_programs.clone().unwrap());
-
-                        // help reset UI
-                        if new_programs.len() == 0 {
-                            self.selected_programs = None;
+                    if let Ok(exists) = std::fs::exists(directory_to_target.join(file_name.clone())) {
+                        if !exists {
+                            match std::os::unix::fs::symlink(
+                                desktop_entry.clone().path,
+                                directory_to_target.join(file_name),
+                            ) {
+                                Ok(_) => {
+                                    self.apps_per_type.insert(directory_type.clone(), get_startup_applications(directory_type.clone(), self.locales.clone()));
+                                }
+                                Err(e) => {
+                                    // @todo - error handling
+                                }
+                            }
                         }
                     }
+                }
 
-                    // always unset program_to_remove, in case we end up in some weird funky edge case
-                    self.program_to_remove = None;
-                }*/
+                self.selected_type = None;
+                return cosmic::task::message(crate::app::Message::ToggleContextPage(ContextPage::AddApplication));
+            }
+            Message::RemoveApplication(directory_type, desktop_entry) => {
+                self.selected_type = Some(directory_type);
+                self.selected_app = Some(desktop_entry);
+            }
+            Message::RemoveApplicationConfirm => {
+                if let Some(directory_type) = &self.selected_type {
+                    if let Some(desktop_entry) = &self.selected_app {
+                        let mut file_name = desktop_entry.clone().appid;
+                        file_name.push_str(".desktop");
+
+                        let directories: Vec<PathBuf> = directory_type.clone().into();
+
+                        let directory_to_target = directories.get(0).expect("Always at least one directory");
+
+                        if let Ok(exists) = std::fs::exists(directory_to_target.join(file_name.clone())) {
+                            if exists {
+                                match std::fs::remove_file(
+                                    directory_to_target.join(file_name),
+                                ) {
+                                    Ok(_) => {
+                                        self.apps_per_type.insert(directory_type.clone(), get_startup_applications(directory_type.clone(), self.locales.clone()));
+                                    }
+                                    Err(e) => {
+                                        // @todo - error handling
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                self.selected_type = None;
+                self.selected_app = None;
+
             }
             Message::RemoveApplicationCancel => {
-                self.selected_index = None;
+                self.selected_type = None;
+                self.selected_app = None;
             }
             Message::GlobalSearchActivate => {
                 self.global_search = Some(String::new());
@@ -512,6 +548,76 @@ impl Application for AppModel {
             }
             Message::GlobalSearchClear => {
                 self.global_search = None;
+            }
+            Message::ChooseScriptActivate(directory_type) => {
+                self.selected_type = Some(directory_type.clone());
+                return cosmic::dialog::file_chooser::open::Dialog::new()
+                    .directory(dirs::home_dir().unwrap())
+                    .title(fl!("script-chooser"))
+                    .filter(
+                        FileFilter::new("*sh scripts")
+                            .glob("*.*sh")
+                    )
+                    .filter(
+                        FileFilter::new("Python scripts")
+                            .glob("*.py*")
+                    )
+                    .filter(
+                        FileFilter::new("All files")
+                            .glob("*.*")
+                    )
+                    .open_file()
+                    .then(|result| async move {
+                        match result {
+                            Ok(response) => {
+                                let Ok(path) = response.url().to_file_path() else {
+                                    // @todo - error
+                                    return Message::ChooseScriptCancel;
+                                };
+
+                                // spaghetti?
+                                let Some(file_name) = path.file_name() else {
+                                    // @todo - error
+                                    return Message::ChooseScriptCancel;
+                                };
+                                let Some(file_name) = file_name.to_str() else {
+                                    // @todo - error
+                                    return Message::ChooseScriptCancel;
+                                };
+
+                                let entry_text = format!("[Desktop Entry]
+Type=Application
+Name={}
+Exec={:?}", file_name, path);
+                                let directories: Vec<PathBuf> = directory_type.clone().into();
+
+                                let directory_to_target = directories.get(0).expect("Always at least one directory");
+                                let mut desktop_file_name = file_name.clone().to_string();
+                                desktop_file_name.push_str(".desktop");
+                                match std::fs::write(directory_to_target.join(desktop_file_name), entry_text) {
+                                    Ok(_) => {
+                                        return Message::RefreshApps(directory_type);
+                                    }
+                                    Err(err) => {
+                                        // @ todo - error
+                                    }
+                                }
+                                return Message::ChooseScriptCancel;
+                            }
+                            Err(cosmic::dialog::file_chooser::Error::Cancelled) => {
+                                return Message::ChooseScriptCancel;
+                            }
+                            Err(why) => {
+                                return Message::ChooseScriptCancel;
+                            }
+                        }
+                    })
+                    .apply(cosmic::task::future);
+            }
+            Message::ChooseScriptConfirm(_) => {}
+            Message::ChooseScriptCancel => {}
+            Message::RefreshApps(directory_type) => {
+                self.apps_per_type.insert(directory_type.clone(), get_startup_applications(directory_type.clone(), self.locales.clone()));
             }
         }
         Task::none()

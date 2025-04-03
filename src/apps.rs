@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 const AUTOSTART: &'static str = "autostart";
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
 pub enum DirectoryType {
     /// Directory for the current user
     User,
@@ -37,7 +37,7 @@ impl Into<Vec<PathBuf>> for DirectoryType {
     }
 }
 
-pub fn get_installed_programs(locales: Vec<String>) -> Vec<DesktopEntry> {
+pub fn get_installed_applications(locales: Vec<String>) -> Vec<DesktopEntry> {
     let mut dedup = std::collections::HashSet::new();
 
     let entries = fde::Iter::new(fde::default_paths()).entries(Some(&locales));
