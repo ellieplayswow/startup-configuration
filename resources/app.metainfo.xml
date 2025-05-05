@@ -3,17 +3,17 @@
   <id>best.ellie.CosmicStartup</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3</project_license>
-  <name>Cosmic Startup</name>
-  <summary>set startup scripts/programs</summary>
+  <name>Startup Configuration</name>
+  <summary>View and set startup scripts and applications</summary>
   <icon type="remote" width="64" height="64" scale="1">
-    https://github.com/pop-os/cosmic-app-template/raw/main/resources/icons/hicolor/scalable/apps/icon.svg
+    https://github.com/ellieplayswow/startup-configuration/raw/main/resources/icons/hicolor/scalable/apps/icon.svg
   </icon>
-  <url type="vcs-browser">https://github.com/ellieplayswow/cosmic-startup</url>
-  <launchable type="desktop-id">best.ellie.CosmicStartup.desktop</launchable>
+  <url type="vcs-browser">https://github.com/ellieplayswow/startup-configuration</url>
+  <launchable type="desktop-id">best.ellie.StartupConfiguration.desktop</launchable>
   <provides>
-    <id>best.ellie.CosmicStartup</id>
+    <id>best.ellie.StartupConfiguration</id>
     <binaries>
-      <binary>cosmic-startup</binary>
+      <binary>startup-configuration</binary>
     </binaries>
   </provides>
   <requires>

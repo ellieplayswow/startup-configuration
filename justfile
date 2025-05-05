@@ -1,5 +1,5 @@
-name := 'cosmic-startup'
-appid := 'best.ellie.CosmicStartup'
+name := 'startup-configuration'
+appid := 'best.ellie.StartupConfiguration'
 
 rootdir := ''
 prefix := '/usr'
