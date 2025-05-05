@@ -99,7 +99,7 @@ impl Application for AppModel {
     type Message = Message;
 
     /// Unique identifier in RDNN (reverse domain name notation) format.
-    const APP_ID: &'static str = "best.ellie.CosmicStartup";
+    const APP_ID: &'static str = "best.ellie.StartupConfiguration";
 
     fn core(&self) -> &Core {
         &self.core

@@ -60,14 +60,14 @@ run *args:
 
 # Installs files
 install:
-    install -Dm0755  
-    install -Dm0644 resources/app.desktop 
-    install -Dm0644 resources/app.metainfo.xml 
-    install -Dm0644  
+    install -Dm0755 {{bin-src}} {{bin-dst}}
+    install -Dm0644 resources/app.desktop {{desktop-dst}}
+    install -Dm0644 resources/app.metainfo.xml {{appdata-dst}}
+    install -Dm0644 {{icon-svg-src}} {{icon-svg-dst}}
 
 # Uninstalls installed files
 uninstall:
-    rm   
+    rm {{bin-dst}} {{desktop-dst}} {{appdata-dst}} {{icon-svg-dst}}
 
 # Vendor dependencies locally
 vendor:
