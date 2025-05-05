@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3
 
+use std::cmp::PartialEq;
 use crate::apps::{get_installed_applications, get_startup_applications, DirectoryType};
 use crate::config::Config;
 use crate::fl;
 use cosmic::app::{context_drawer, Core, Task};
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
-use cosmic::iced::{Alignment, Length, Subscription};
+use cosmic::iced::{Alignment, Border, Color, Length, Subscription};
 use cosmic::iced_core::widget::Text;
-use cosmic::style::Button;
 use cosmic::theme::Container::List;
-use cosmic::widget::{self, button, column, icon, list_column, row, vertical_space};
+use cosmic::widget::{self, button, column, container, icon, list_column, row, vertical_space};
 use cosmic::{theme, Application, ApplicationExt, Apply, Element, Renderer, Theme};
 use freedesktop_desktop_entry::DesktopEntry;
 use futures_util::{FutureExt, SinkExt};
@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use cosmic::dialog::file_chooser::FileFilter;
 //const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
-//const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
+const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
@@ -42,6 +42,8 @@ pub struct AppModel {
     // global search
     global_search: Option<String>,
     global_search_id: widget::Id,
+
+    popover_item: Option<u32>,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -66,10 +68,17 @@ pub enum Message {
     GlobalSearchClear,
 
     ChooseScriptActivate(DirectoryType),
-    ChooseScriptConfirm(String),
     ChooseScriptCancel,
 
-    RefreshApps(DirectoryType)
+    RefreshApps(DirectoryType),
+
+    TogglePopover(u32),
+    PopoverAction(u32, PopoverMessage)
+}
+
+#[derive(Clone, Debug)]
+pub enum PopoverMessage {
+    ViewInFiles,
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -135,32 +144,14 @@ impl Application for AppModel {
 
             global_search: None,
             global_search_id: widget::Id::unique(),
+
+            popover_item: None,
         };
 
         // Create a startup command that sets the window title.
         let command = app.update_title();
 
         (app, command)
-    }
-
-    fn dialog(&self) -> Option<Element<Self::Message>> {
-        if let Some(selected_app) = &self.selected_app {
-            return Some(
-                widget::dialog()
-                    .title(fl!("dialog-remove-application"))
-                    .icon(icon::from_name("dialog-error-symbolic").size(64))
-                    .body(fl!("dialog-remove-application", "body"))
-                    .secondary_action(widget::button::destructive(fl!("actions", "yes")).on_press(
-                        Message::RemoveApplicationConfirm,
-                    ))
-                    .primary_action(
-                        widget::button::suggested(fl!("actions", "no"))
-                            .on_press(Message::RemoveApplicationCancel),
-                    )
-                    .into(),
-            );
-        }
-        None
     }
 
     fn context_drawer(&self) -> Option<context_drawer::ContextDrawer<Self::Message>> {
@@ -176,15 +167,15 @@ impl Application for AppModel {
 
                 let search_input = &self.application_search.trim().to_lowercase();
 
-                let mut list = widget::list_column()
+                let mut list = list_column()
                     .padding(theme::active().cosmic().space_xs())
                     .list_item_padding(0);
 
                 for application in self.installed_apps.iter() {
                     if search_input.is_empty()
-                        || (application
+                        || application
                             .name(&freedesktop_desktop_entry::get_languages_from_env())
-                            .unwrap_or("".into()))
+                            .unwrap_or("".into())
                         .to_lowercase()
                         .contains(search_input)
                     {
@@ -223,6 +214,26 @@ impl Application for AppModel {
         })
     }
 
+    fn dialog(&self) -> Option<Element<Self::Message>> {
+        if let Some(_selected_app) = &self.selected_app {
+            return Some(
+                widget::dialog()
+                    .title(fl!("dialog-remove-application"))
+                    .icon(icon::from_name("dialog-error-symbolic").size(64))
+                    .body(fl!("dialog-remove-application", "body"))
+                    .secondary_action(button::destructive(fl!("actions", "yes")).on_press(
+                        Message::RemoveApplicationConfirm,
+                    ))
+                    .primary_action(
+                        button::suggested(fl!("actions", "no"))
+                            .on_press(Message::RemoveApplicationCancel),
+                    )
+                    .into(),
+            );
+        }
+        None
+    }
+
     fn header_end(&self) -> Vec<Element<Self::Message>> {
         let mut elements = Vec::with_capacity(2);
 
@@ -246,171 +257,6 @@ impl Application for AppModel {
         }
 
         elements
-    }
-
-    /// Describes the interface based on the current state of the application model.
-    ///
-    /// Application events will be processed through the view. Any messages emitted by
-    /// events received by widgets will be passed to the update method.
-    fn view(&self) -> Element<Self::Message> {
-        let cosmic::cosmic_theme::Spacing {
-            space_s,
-            space_xs,
-            space_l,
-            ..
-        } = cosmic::theme::active().cosmic().spacing;
-
-        let mut sections = column().spacing(space_l);
-
-        let header = column()
-            .push(widget::text::title1(fl!("window-title")))
-            .push(widget::text(fl!("application-description")));
-
-        sections = sections.push(header);
-
-        let available_types = vec![DirectoryType::User, DirectoryType::System];
-
-        for directory_type in available_types {
-            let mut section = column().spacing(space_s);
-
-            let (section_name, section_description) = match directory_type {
-                DirectoryType::User => (
-                    fl!("user-applications"),
-                    fl!("user-applications", "description"),
-                ),
-                DirectoryType::System => (
-                    fl!("system-applications"),
-                    fl!("system-applications", "description"),
-                ),
-            };
-
-            section = section.push(
-                column()
-                    .push(widget::text::heading(section_name).size(18.0))
-                    .push(widget::text(section_description)),
-            );
-
-            let mut valid_apps = 0;
-            let search_input = match &self.global_search {
-                None => "",
-                Some(search) => &search.trim().to_lowercase(),
-            };
-
-            if let Some(apps) = self.apps_per_type.get(&directory_type) {
-                if apps.len() > 0 {
-                    let mut list_col = list_column().style(List);
-                    for app in apps {
-                        let app_name = match app.name(&self.locales) {
-                            Some(name) => name.to_string(),
-                            None => app.appid.to_owned(),
-                        };
-
-                        let app_exec = app.exec().expect("invalid state");
-
-                        if search_input.is_empty()
-                            || app_name.to_lowercase().contains(search_input)
-                            || app_exec.to_lowercase().contains(search_input)
-                        {
-                            valid_apps = valid_apps + 1;
-
-                            let mut row = row::with_capacity(3)
-                                .spacing(space_xs)
-                                .align_y(Alignment::Center);
-
-                            row = row.push(
-                                icon::from_name(app.icon().unwrap_or("application-default"))
-                                    .size(32),
-                            );
-
-                            let mut name_col = column().align_x(Alignment::Start);
-
-                            name_col =
-                                name_col.push(widget::text::heading(app_name).width(Length::Fill));
-                            name_col = name_col.push(exec_line(String::from(app_exec)));
-
-                            row = row.push(name_col);
-
-                            // actions
-                            row = row.push(
-                                widget::row()
-                                    .spacing(space_xs)
-                                    .push(
-                                        button::icon(icon::from_name("edit-delete-symbolic"))
-                                            .extra_small()
-                                            .on_press(Message::RemoveApplication(directory_type.clone(), app.clone())),
-                                    )
-                                    .push(
-                                        button::icon(icon::from_name("view-more-symbolic"))
-                                            .extra_small(),
-                                    ),
-                            );
-
-                            list_col = list_col.add(row);
-                        }
-                    }
-
-                    if valid_apps > 0 {
-                        section = section.push(list_col);
-
-                        // @todo: get directory type
-                        if search_input.is_empty() {
-                            let controls = widget::container(
-                                row()
-                                    .spacing(space_xs)
-                                    .push(
-                                        widget::button::standard(fl!("add-script")).trailing_icon(
-                                            icon::from_name("window-pop-out-symbolic"),
-                                        )
-                                            .on_press(Message::ChooseScriptActivate(directory_type.clone())),
-                                    )
-                                    .push(
-                                        widget::button::suggested(fl!("add-application"))
-                                            .trailing_icon(icon::from_name("list-add-symbolic"))
-                                            .on_press(Message::AddApplicationActivate(directory_type.clone())),
-                                    ),
-                            )
-                            .width(Length::Fill)
-                            .align_x(Alignment::End);
-                            section = section.push(controls);
-                        }
-                    } else {
-                        section = section.push(
-                            list_column()
-                                .style(List)
-                                .add(widget::text::heading(fl!("no-applications-found"))),
-                        );
-                    }
-                } else {
-                    section = section.push(
-                        list_column().style(List).add(
-                            cosmic::iced::widget::column![
-                                widget::text::title3(fl!("no-applications-selected")),
-                                widget::text::caption(fl!("no-applications-caption"))
-                            ]
-                            .width(Length::Fill)
-                            .align_x(Horizontal::Center),
-                        ),
-                    );
-                }
-            }
-
-            sections = sections.push(section);
-        }
-
-        sections = sections.push(vertical_space().height(Length::Fixed(64.0)));
-
-        widget::container(
-            widget::scrollable(sections)
-                .height(Length::Fill)
-                .spacing(space_l),
-        )
-        // fill the full application window
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .align_x(Horizontal::Left)
-        .align_y(Vertical::Top)
-        .padding([0, 0, 0, space_l])
-        .into()
     }
 
     /// Register subscriptions for this application.
@@ -469,7 +315,7 @@ impl Application for AppModel {
             }
             Message::AddApplicationActivate(directory_type) => {
                 self.selected_type = Some(directory_type);
-                return cosmic::task::message(crate::app::Message::ToggleContextPage(ContextPage::AddApplication));
+                return cosmic::task::message(Message::ToggleContextPage(ContextPage::AddApplication));
             }
             Message::AddApplication(desktop_entry) => {
                 if let Some(directory_type) = &self.selected_type {
@@ -498,7 +344,7 @@ impl Application for AppModel {
                 }
 
                 self.selected_type = None;
-                return cosmic::task::message(crate::app::Message::ToggleContextPage(ContextPage::AddApplication));
+                return cosmic::task::message(Message::ToggleContextPage(ContextPage::AddApplication));
             }
             Message::RemoveApplication(directory_type, desktop_entry) => {
                 self.selected_type = Some(directory_type);
@@ -568,7 +414,7 @@ impl Application for AppModel {
                     )
                     .open_file()
                     .then(|result| async move {
-                        match result {
+                        return match result {
                             Ok(response) => {
                                 let Ok(path) = response.url().to_file_path() else {
                                     // @todo - error
@@ -592,7 +438,7 @@ Exec={:?}", file_name, path);
                                 let directories: Vec<PathBuf> = directory_type.clone().into();
 
                                 let directory_to_target = directories.get(0).expect("Always at least one directory");
-                                let mut desktop_file_name = file_name.clone().to_string();
+                                let mut desktop_file_name = file_name.to_string();
                                 desktop_file_name.push_str(".desktop");
                                 match std::fs::write(directory_to_target.join(desktop_file_name), entry_text) {
                                     Ok(_) => {
@@ -602,25 +448,264 @@ Exec={:?}", file_name, path);
                                         // @ todo - error
                                     }
                                 }
-                                return Message::ChooseScriptCancel;
+                                Message::ChooseScriptCancel
                             }
                             Err(cosmic::dialog::file_chooser::Error::Cancelled) => {
-                                return Message::ChooseScriptCancel;
+                                Message::ChooseScriptCancel
                             }
                             Err(why) => {
-                                return Message::ChooseScriptCancel;
+                                Message::ChooseScriptCancel
                             }
                         }
                     })
                     .apply(cosmic::task::future);
             }
-            Message::ChooseScriptConfirm(_) => {}
             Message::ChooseScriptCancel => {}
             Message::RefreshApps(directory_type) => {
                 self.apps_per_type.insert(directory_type.clone(), get_startup_applications(directory_type.clone(), self.locales.clone()));
             }
+            Message::TogglePopover(idx) => {
+                if let Some(current_idx) = self.popover_item {
+                    if idx == current_idx {
+                        self.popover_item = None;
+                    }
+                    else {
+                        self.popover_item = Some(idx);
+                    }
+                }
+                else {
+                    self.popover_item = Some(idx);
+                }
+            }
+            Message::PopoverAction(idx, popover_action) => {
+                if let Some(user_apps) = self.apps_per_type.get(&DirectoryType::User) {
+                    if let Some(app) = user_apps.get(idx as usize) {
+                        match popover_action {
+                            PopoverMessage::ViewInFiles => {
+                                if let Some(dir) = &app.path.parent() {
+                                    let _ = open::that_detached(dir);
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+                
+                self.popover_item = None;
+            }
         }
         Task::none()
+    }
+
+    /// Describes the interface based on the current state of the application model.
+    ///
+    /// Application events will be processed through the view. Any messages emitted by
+    /// events received by widgets will be passed to the update method.
+    fn view(&self) -> Element<Self::Message> {
+        let cosmic::cosmic_theme::Spacing {
+            space_s,
+            space_xs,
+            space_l,
+            ..
+        } = theme::active().cosmic().spacing;
+
+        let mut sections = column().spacing(space_l);
+
+        let header = column()
+            .push(widget::text::title1(fl!("window-title")))
+            .push(widget::text(fl!("application-description")));
+
+        sections = sections.push(header);
+
+        let available_types = vec![DirectoryType::User, DirectoryType::System];
+
+        for directory_type in available_types {
+            let mut section = column().spacing(space_s);
+
+            let (section_name, section_description) = match directory_type {
+                DirectoryType::User => (
+                    fl!("user-applications"),
+                    fl!("user-applications", "description"),
+                ),
+                DirectoryType::System => (
+                    fl!("system-applications"),
+                    fl!("system-applications", "description"),
+                ),
+            };
+
+            section = section.push(
+                column()
+                    .push(widget::text::heading(section_name).size(18.0))
+                    .push(widget::text(section_description)),
+            );
+
+            let mut valid_apps = 0;
+            let search_input = match &self.global_search {
+                None => "",
+                Some(search) => &search.trim().to_lowercase(),
+            };
+
+            if let Some(apps) = self.apps_per_type.get(&directory_type) {
+                let is_user = directory_type == DirectoryType::User;
+                if apps.len() > 0 {
+                    let mut list_col = list_column().style(List);
+                    let mut idx = 0;
+                    for app in apps {
+                        let app_name = match app.name(&self.locales) {
+                            Some(name) => name.to_string(),
+                            None => app.appid.to_owned(),
+                        };
+
+                        let app_exec = app.exec().expect("invalid state");
+
+                        if search_input.is_empty()
+                            || app_name.to_lowercase().contains(search_input)
+                            || app_exec.to_lowercase().contains(search_input)
+                        {
+                            valid_apps = valid_apps + 1;
+
+                            let mut row = row::with_capacity(3)
+                                .spacing(space_xs)
+                                .align_y(Alignment::Center);
+
+                            row = row.push(
+                                icon::from_name(app.icon().unwrap_or("application-default"))
+                                    .size(32),
+                            );
+
+                            let mut name_col = column().align_x(Alignment::Start);
+
+                            name_col =
+                                name_col.push(widget::text::heading(app_name).width(Length::Fill));
+                            name_col = name_col.push(exec_line(String::from(app_exec)));
+
+                            row = row.push(name_col);
+
+                            // actions
+                            if is_user {
+                                let is_expanded = match self.popover_item {
+                                    Some(i) => i == idx,
+                                    None => false
+                                };
+                                let more_button = button::icon(icon::from_name("view-more-symbolic"))
+                                    .on_press(Message::TogglePopover(idx))
+                                    .extra_small();
+
+                                let mut actions_row = widget::row()
+                                    .spacing(space_xs)
+                                    .push(
+                                        button::icon(icon::from_name("edit-delete-symbolic"))
+                                            .extra_small()
+                                            .on_press(Message::RemoveApplication(directory_type.clone(), app.clone())),
+                                    );
+
+                                if is_expanded {
+                                    println!("expanded");
+                                    actions_row = actions_row.push(cosmic::widget::popover(more_button)
+                                        .popup(column::with_children(vec![
+                                            popover_item(idx, fl!("popover-menu", "view-in-files"), PopoverMessage::ViewInFiles),
+                                        ])
+                                            .padding([2, 8])
+                                            .width(Length::Shrink)
+                                            .height(Length::Shrink)
+                                            .apply(widget::container)
+                                            .class(theme::Container::custom(|theme| {
+                                                let cosmic = theme.cosmic();
+                                                let background = &cosmic.background;
+
+                                                container::Style {
+                                                    icon_color: Some(background.on.into()),
+                                                    text_color: Some(background.on.into()),
+                                                    background: Some(Color::from(background.base).into()),
+                                                    border: Border {
+                                                        color: background.component.divider.into(),
+                                                        width: 1.0,
+                                                        radius: cosmic.corner_radii.radius_s.into(),
+                                                        ..Border::default()
+                                                    },
+                                                    shadow: Default::default(),
+                                                }
+                                            }))
+                                        )
+                                        .on_close(Message::TogglePopover(idx)));
+                                }
+                                else {
+                                    actions_row = actions_row.push(more_button);
+                                }
+
+                                row = row.push(
+                                    actions_row
+                                );
+                            }
+
+                            list_col = list_col.add(row);
+                        }
+
+                        idx += 1;
+                    }
+
+                    if valid_apps > 0 {
+                        section = section.push(list_col);
+
+                        // @todo: get directory type
+                        if search_input.is_empty() && is_user {
+                            let controls = widget::container(
+                                row()
+                                    .spacing(space_xs)
+                                    .push(
+                                        button::standard(fl!("add-script")).trailing_icon(
+                                            icon::from_name("window-pop-out-symbolic"),
+                                        )
+                                            .on_press(Message::ChooseScriptActivate(directory_type.clone())),
+                                    )
+                                    .push(
+                                        button::suggested(fl!("add-application"))
+                                            .trailing_icon(icon::from_name("list-add-symbolic"))
+                                            .on_press(Message::AddApplicationActivate(directory_type.clone())),
+                                    ),
+                            )
+                            .width(Length::Fill)
+                            .align_x(Alignment::End);
+                            section = section.push(controls);
+                        }
+                    } else {
+                        section = section.push(
+                            list_column()
+                                .style(List)
+                                .add(widget::text::heading(fl!("no-applications-found"))),
+                        );
+                    }
+                } else {
+                    section = section.push(
+                        list_column().style(List).add(
+                            cosmic::iced::widget::column![
+                                widget::text::title3(fl!("no-applications-selected")),
+                                widget::text::caption(fl!("no-applications-caption"))
+                            ]
+                            .width(Length::Fill)
+                            .align_x(Horizontal::Center),
+                        ),
+                    );
+                }
+            }
+
+            sections = sections.push(section);
+        }
+
+        sections = sections.push(vertical_space().height(Length::Fixed(64.0)));
+
+        widget::container(
+            widget::scrollable(sections)
+                .height(Length::Fill)
+                .spacing(space_l),
+        )
+        // fill the full application window
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .align_x(Horizontal::Left)
+        .align_y(Vertical::Top)
+        .padding([0, 0, 0, space_l])
+        .into()
     }
 }
 
@@ -639,4 +724,19 @@ impl AppModel {
 
 fn exec_line<'a>(text: String) -> Text<'a, Theme, Renderer> {
     widget::text::monotext(text).size(10.0)
+}
+
+fn popover_item(idx: u32, label: String, message: PopoverMessage) -> Element<'static, Message> {
+    widget::text::body(label)
+        .apply(widget::container)
+        .class(theme::Container::custom(|theme| {
+            container::Style {
+                background: None,
+                ..container::Catalog::style(theme, &List)
+            }
+        }))
+        .apply(button::custom)
+        .on_press(Message::PopoverAction(idx, message))
+        .class(theme::Button::Transparent)
+        .into()
 }

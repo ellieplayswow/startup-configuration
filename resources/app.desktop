@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Cosmic Startup
-Comment=set startup scripts/programs
+Name=Startup Configuration
+Comment=View and set startup scripts and applications
 Type=Application
 Icon=best.ellie.StartupConfiguration
 Exec=startup-configuration %F

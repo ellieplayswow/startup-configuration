@@ -14,8 +14,8 @@ fn main() -> cosmic::iced::Result {
     // Settings for configuring the application window and iced runtime.
     let settings = cosmic::app::Settings::default().size_limits(
         cosmic::iced::Limits::NONE
-            .min_width(360.0)
-            .min_height(180.0),
+            .min_width(300.0)
+            .min_height(450.0),
     );
 
     cosmic::app::run::<app::AppModel>(settings, ())

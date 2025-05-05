@@ -7,6 +7,9 @@ no-applications-selected = No applications selected
 no-applications-caption = Press the + button to add a new application
 no-applications-found = No applications found
 
+popover-menu = Popover Menu
+    .view-in-files = View in files
+
 actions = Actions
     .yes = Yes
     .no = No
