@@ -1,2 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="256" height="256" fill="none">
+    <defs>
+        <linearGradient id="a" x1="248" x2="40.837" y1="72" y2="253.483"
+                        gradientTransform="matrix(1 0 0 .97262 0 -14.029)" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#49BAC8"/>
+            <stop offset="1" stop-color="#05919F"/>
+        </linearGradient>
+        <linearGradient xlink:href="#a" id="b" x1="248" x2="40.837" y1="72" y2="253.483"
+                        gradientTransform="matrix(1 0 0 .97262 0 -14.029)" gradientUnits="userSpaceOnUse"/>
+    </defs>
+    <g fill="url(#a)" transform="matrix(1 0 0 1.39614 0 -50.705)">
+        <path d="M8 72c0-8.837 7.163-16 16-16h208c8.837 0 16 7.163 16 16v112c0 8.837-7.163 16-16 16H24c-8.837 0-16-7.163-16-16z"
+              style="fill:#00717c;fill-opacity:1"/>
+        <path d="M8 71.562C8 62.967 15.163 56 24 56h208c8.837 0 16 6.967 16 15.562v108.934c0 8.595-7.163 15.562-16 15.562H24c-8.837 0-16-6.967-16-15.562z"
+              style="fill:url(#b);stroke-width:.986217"/>
+    </g>
+    <!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+    <path d="m106.668 155.667-6.635-6.634c-1.825-1.825-2.469-4.466-1.653-6.914a364.494 364.494 0 0 1 2.534-7.258H78.197a5.176 5.176 0 0 1-4.488-2.598 5.128 5.128 0 0 1 .043-5.174l11.273-19.002a15.454 15.454 0 0 1 13.29-7.58h17.672a59.763 59.763 0 0 1 1.546-2.426c17.585-25.938 43.78-26.797 59.411-23.92 2.491.451 4.423 2.405 4.896 4.896 2.877 15.653 1.997 41.826-23.92 59.412a47.806 47.806 0 0 1-2.426 1.546v17.67a15.427 15.427 0 0 1-7.58 13.291l-19.001 11.273a5.15 5.15 0 0 1-7.773-4.445v-23.017a352.306 352.306 0 0 1-7.665 2.555c-2.405.773-5.025.107-6.828-1.675zm48.826-46.571a8.589 8.589 0 1 0 0-17.178 8.589 8.589 0 1 0 0 17.178z"
+          style="fill:#005d66;fill-opacity:1;stroke-width:.214715"/>
+</svg>

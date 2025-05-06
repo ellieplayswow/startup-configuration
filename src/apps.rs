@@ -62,16 +62,15 @@ pub fn get_installed_applications(locales: Vec<String>) -> Vec<DesktopEntry> {
         }
 
         // match based off of current desktop environment if it exists
-        if let Ok(ref current_desktop) = current_desktop {
+        if let Ok(ref desktop_str) = current_desktop {
             if let Some(only_show_in) = entry.only_show_in() {
-                // what thef uck
-                if !only_show_in.contains(&&**current_desktop) {
+                if !only_show_in.contains(&desktop_str.as_str()) {
                     continue;
                 }
             }
 
             if let Some(not_show_in) = entry.not_show_in() {
-                if not_show_in.contains(&&**current_desktop) {
+                if not_show_in.contains(&desktop_str.as_str()) {
                     continue;
                 }
             }

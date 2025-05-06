@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="256"
+   height="256"
+   viewBox="0 0 256 256"
+   fill="none"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="inkscape-icon.svg"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="2.15625"
+     inkscape:cx="43.130435"
+     inkscape:cy="141.44928"
+     inkscape:window-width="2560"
+     inkscape:window-height="1307"
+     inkscape:window-x="26"
+     inkscape:window-y="23"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg3" />
+  <defs
+     id="defs3">
+    <linearGradient
+       id="paint0_linear_2004_704"
+       x1="248"
+       y1="72"
+       x2="40.837"
+       y2="253.483"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,0.9726248,0,-14.028985)">
+      <stop
+         stop-color="#49BAC8"
+         id="stop2"
+         offset="0" />
+      <stop
+         offset="1"
+         stop-color="#05919F"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#paint0_linear_2004_704"
+       id="linearGradient5"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,0.9726248,0,-14.028985)"
+       x1="248"
+       y1="72"
+       x2="40.837"
+       y2="253.483" />
+  </defs>
+  <g
+     id="g3"
+     transform="matrix(1,0,0,1.3961353,0,-50.705318)">
+    <path
+       d="m 8.0000021,72.000002 c 0,-8.8366 7.1633999,-16 15.9999999,-16 H 232 c 8.837,0 16,7.1634 16,16 V 184 c 0,8.837 -7.163,16 -16,16 H 24.000002 c -8.8366,0 -15.9999998,-7.163 -15.9999998,-16 z"
+       fill="url(#paint0_linear_2004_704)"
+       id="path2-7"
+       style="fill:#00717c;fill-opacity:1" />
+    <path
+       d="M 8,71.561997 C 8,62.9673 15.1634,56 24,56 h 208 c 8.837,0 16,6.9673 16,15.561997 V 180.49597 c 0,8.59509 -7.163,15.562 -16,15.562 H 24 c -8.8366,0 -16,-6.96691 -16,-15.562 z"
+       fill="url(#paint0_linear_2004_704)"
+       id="path2"
+       style="fill:url(#linearGradient5);stroke-width:0.986217" />
+  </g>
+  <!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+  <path
+     d="m 106.66814,155.66732 -6.63468,-6.63469 c -1.825082,-1.82508 -2.469226,-4.46607 -1.653311,-6.91382 0.644144,-1.91097 1.503005,-4.40166 2.533641,-7.25737 H 78.196949 c -1.84654,0 -3.56427,-0.98768 -4.48754,-2.59805 -0.92328,-1.61036 -0.90181,-3.58574 0.0429,-5.17463 L 85.024844,108.0865 c 2.791293,-4.70226 7.837094,-7.57944 13.290851,-7.57944 h 17.671035 c 0.51531,-0.858864 1.03063,-1.653309 1.54594,-2.426281 17.58512,-25.93756 43.78034,-26.796419 59.41158,-23.91924 2.4907,0.450901 4.42313,2.404807 4.8955,4.8955 2.87718,15.652715 1.99685,41.826461 -23.91924,59.411611 -0.7515,0.51532 -1.56741,1.03063 -2.42627,1.54595 v 17.67104 c 0,5.45375 -2.87718,10.52103 -7.57944,13.29085 l -19.00227,11.27253 c -1.58889,0.94474 -3.56426,0.96621 -5.17463,0.043 -1.61036,-0.92328 -2.59805,-2.61953 -2.59805,-4.48755 v -23.01749 c -3.02748,1.05211 -5.66847,1.91097 -7.66532,2.55511 -2.4048,0.77298 -5.02433,0.10736 -6.82793,-1.67477 z m 48.82617,-46.57166 a 8.5885975,8.5885975 0 1 0 0,-17.177199 8.5885975,8.5885975 0 1 0 0,17.177199 z"
+     id="path1"
+     style="fill:#005d66;fill-opacity:1;stroke-width:0.214715" />
+</svg>

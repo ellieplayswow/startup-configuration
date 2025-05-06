@@ -1,10 +1,23 @@
-# Cosmic Startup
+<div align="center">
+    <img src="resources/icons/hicolor/scalable/apps/icon.svg" height="200" />
+</div>
 
-set startup scripts/programs
+# Startup Configuration
+
+View, add and remove startup applications on Linux systems.
+
+![Application preview in light and dark mode](doc/img/preview-lightdark.png)
+
 
 ## Installation
 
-A [justfile](./justfile) is included by default for the [casey/just][just] command runner.
+A [justfile](./justfile) is included by default for the [casey/just][just] command runner. To install locally, just run:
+```sh
+just build-release
+sudo just install
+```
+
+Other `just` commands:
 
 - `just` builds the application with the default `just build-release` recipe
 - `just run` builds and runs the application
@@ -33,6 +46,15 @@ It is recommended to build a source tarball with the vendored dependencies, whic
 ## Developers
 
 Developers should install [rustup][rustup] and configure their editor to use [rust-analyzer][rust-analyzer]. To improve compilation times, disable LTO in the release profile, install the [mold][mold] linker, and configure [sccache][sccache] for use with Rust. The [mold][mold] linker will only improve link times if LTO is disabled.
+
+## License
+This project is licensed under the GPLv3 - see [LICENSE](LICENSE) for the full license.
+
+## Credits
+
+Some code relating to popovers & startup applications were taken from [COSMIC Settings](https://github.com/pop-os/cosmic-settings) (GPLv3).
+
+Icon is a modified version of the [COSMIC Files](https://github.com/pop-os/cosmic-files) icon (GPLv3) and the rocket from [Font Awesome Free](https://fontawesome.com/icons/rocket?f=classic&s=solid) (CC-BY 4.0).
 
 [fluent]: https://projectfluent.org/
 [fluent-guide]: https://projectfluent.org/fluent/guide/hello.html

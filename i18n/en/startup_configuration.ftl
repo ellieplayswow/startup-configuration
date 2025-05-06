@@ -1,4 +1,4 @@
-app-title = Startup Configurator
+app-title = Startup Configuration
 window-title = Startup Applications
 application-description = This application will help you configure applications which are launched at startup.
 add-script = Add Script
