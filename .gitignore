@@ -14,3 +14,5 @@ debian/*
 !debian/source
 .idea/
 .flatpak-builder/
+repo/
+flatpak-build/
