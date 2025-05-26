@@ -25,9 +25,23 @@ impl Into<Vec<PathBuf>> for DirectoryType {
 
                 if let Ok(xdg_dir) = env::var("XDG_CONFIG_DIRS") {
                     for dir in xdg_dir.split(':') {
+                        // when running as a flatpak, /etc is mounted under /run/host/etc
+                        #[cfg(feature = "flatpak")]
+                        if dir.starts_with("/etc/") {
+                            vec.push(PathBuf::from("/run/host/").join(dir.strip_prefix("/").expect("This should never fail")).join(AUTOSTART));
+                        }
+                        else {
+                            vec.push(PathBuf::from(dir).join(AUTOSTART));
+                        }
+
+                        #[cfg(not(feature = "flatpak"))]
                         vec.push(PathBuf::from(dir).join(AUTOSTART));
                     }
                 } else {
+                    #[cfg(feature = "flatpak")]
+                    vec.push(PathBuf::from("/run/host/etc/xdg/").join(AUTOSTART));
+
+                    #[cfg(not(feature = "flatpak"))]
                     vec.push(PathBuf::from("/etc/xdg/").join(AUTOSTART));
                 }
 
@@ -40,7 +54,24 @@ impl Into<Vec<PathBuf>> for DirectoryType {
 pub fn get_installed_applications(locales: Vec<String>) -> Vec<DesktopEntry> {
     let mut dedup = std::collections::HashSet::new();
 
-    let entries = fde::Iter::new(fde::default_paths()).entries(Some(&locales));
+    let default_paths = fde::default_paths();
+
+    let mut valid_paths = Vec::new();
+    for path in default_paths {
+        // when running as a flatpak, we'll find /usr/* under /run/host/usr/*
+        #[cfg(feature = "flatpak")]
+        if path.starts_with("/usr/") {
+            valid_paths.push(PathBuf::from("/run/host/").join(path.strip_prefix("/").expect("This should never fail")));
+        }
+        else {
+            valid_paths.push(path);
+        }
+
+        #[cfg(not(feature = "flatpak"))]
+        valid_paths.push(path);
+    }
+
+    let entries = fde::Iter::new(valid_paths.into_iter()).entries(Some(&locales));
 
     let current_desktop = env::var("XDG_SESSION_DESKTOP");
 

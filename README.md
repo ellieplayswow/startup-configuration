@@ -54,6 +54,8 @@ This project is licensed under the GPLv3 - see [LICENSE](LICENSE) for the full l
 
 Some code relating to popovers & startup applications were taken from [COSMIC Settings](https://github.com/pop-os/cosmic-settings) (GPLv3).
 
+Some information on creating a Flatpak manifest was gained from [COSMIC Tweaks](https://github.com/cosmic-utils/tweaks/pull/23)
+
 Icon is a modified version of the [COSMIC Files](https://github.com/pop-os/cosmic-files) icon (GPLv3) and the rocket from [Font Awesome Free](https://fontawesome.com/icons/rocket?f=classic&s=solid) (CC-BY 4.0).
 
 [fluent]: https://projectfluent.org/

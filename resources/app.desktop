@@ -6,6 +6,6 @@ Icon=best.ellie.StartupConfiguration
 Exec=startup-configuration %F
 Terminal=false
 StartupNotify=true
-Categories=COSMIC
+Categories=Utility;Settings;DesktopSettings
 Keywords=COSMIC
 MimeType=
