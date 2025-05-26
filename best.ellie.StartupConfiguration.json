@@ -2,11 +2,10 @@
   "id": "best.ellie.StartupConfiguration",
   "runtime": "org.freedesktop.Platform",
   "runtime-version": "24.08",
+  "base": "com.system76.Cosmic.BaseApp",
+  "base-version": "stable",
   "sdk": "org.freedesktop.Sdk",
-  "sdk-extensions": [
-    "org.freedesktop.Sdk.Extension.rust-stable",
-    "org.freedesktop.Sdk.Extension.llvm18"
-  ],
+  "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-stable"],
   "command": "startup-configuration",
   "finish-args": [
     "--share=ipc",
@@ -15,18 +14,16 @@
     "--socket=wayland",
     "--device=dri",
     "--talk-name=com.system76.CosmicSettingsDaemon",
-    "--filesystem=xdg-config/autostart:rw",
-    "--filesystem=host-etc:r",
-    "--filesystem=home:r"
+    "--filesystem=xdg-config/autostart:create",
+    "--filesystem=host-etc:ro",
+    "--filesystem=home:ro",
+    "--filesystem=xdg-data:ro",
+    "--filesystem=host-os:ro"
   ],
   "build-options": {
-    "append-path": "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm18/bin",
+    "append-path": "/usr/lib/sdk/rust-stable/bin",
     "env": {
-      "CARGO_HOME": "/run/build/startup-configuration/cargo",
-      "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER": "clang",
-      "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS": "-C link-arg=-fuse-ld=/usr/lib/sdk/rust-stable/bin/mold",
-      "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER": "clang",
-      "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS": "-C link-arg=-fuse-ld=/usr/lib/sdk/rust-stable/bin/mold"
+      "CARGO_HOME": "/run/build/startup-configuration/cargo"
     }
   },
   "modules": [
