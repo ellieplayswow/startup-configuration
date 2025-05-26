@@ -13,6 +13,7 @@ use cosmic::{theme, Application, ApplicationExt, Apply, Element, Renderer, Theme
 use freedesktop_desktop_entry::DesktopEntry;
 use futures_util::{FutureExt, SinkExt};
 use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
 use cosmic::dialog::file_chooser::FileFilter;
 //const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
@@ -304,6 +305,20 @@ impl Application for AppModel {
 
                     if let Ok(exists) = std::fs::exists(directory_to_target.join(file_name.clone())) {
                         if !exists {
+                            #[cfg(feature = "flatpak")]
+                            match fs::copy(
+                                desktop_entry.clone().path,
+                                directory_to_target.join(file_name),
+                            ) {
+                                Ok(_) => {
+                                    self.apps_per_type.insert(directory_type.clone(), get_startup_applications(directory_type.clone(), self.locales.clone()));
+                                }
+                                Err(e) => {
+                                    // @todo - error handling
+                                }
+                            }
+
+                            #[cfg(not(feature = "flatpak"))]
                             match std::os::unix::fs::symlink(
                                 desktop_entry.clone().path,
                                 directory_to_target.join(file_name),

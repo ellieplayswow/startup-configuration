@@ -38,10 +38,35 @@
     <control>touch</control>
   </supports>
   <categories>
-    <category>COSMIC</category>
+    <category>Settings</category>
+    <category>System</category>
+    <category>Utility</category>
   </categories>
   <keywords>
     <keyword>COSMIC</keyword>
+    <keyword>autostart</keyword>
+    <keyword>launch program</keyword>
   </keywords>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/ellieplayswow/startup-configuration/main/doc/img/preview-lightdark.png</image>
+      <caption>State when application loads, previewed in both light and dark modes</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/ellieplayswow/startup-configuration/main/doc/img/preview-add-application.png</image>
+      <caption>Showcasing "add application" searching in dark mode</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/ellieplayswow/startup-configuration/main/doc/img/preview-global-search.png</image>
+      <caption>Showcasing global search functionality in dark mode</caption>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="1.0.0" date="2025-05-26">
+      <description translate="no">
+        <p>Version 1.0.0: Initial public release</p>
+      </description>
+    </release>
+  </releases>
   <content_rating type="oars-1.1" />
 </component>
