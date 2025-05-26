@@ -1,0 +1,52 @@
+{
+  "id": "best.ellie.StartupConfiguration",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "24.08",
+  "sdk": "org.freedesktop.Sdk",
+  "sdk-extensions": [
+    "org.freedesktop.Sdk.Extension.rust-stable",
+    "org.freedesktop.Sdk.Extension.llvm18"
+  ],
+  "command": "startup-configuration",
+  "finish-args": [
+    "--share=ipc",
+    "--share=network",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--talk-name=com.system76.CosmicSettingsDaemon",
+    "--filesystem=xdg-config/autostart:rw",
+    "--filesystem=host-etc:r",
+    "--filesystem=home:r"
+  ],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm18/bin",
+    "env": {
+      "CARGO_HOME": "/run/build/startup-configuration/cargo",
+      "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER": "clang",
+      "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS": "-C link-arg=-fuse-ld=/usr/lib/sdk/rust-stable/bin/mold",
+      "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER": "clang",
+      "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS": "-C link-arg=-fuse-ld=/usr/lib/sdk/rust-stable/bin/mold"
+    }
+  },
+  "modules": [
+    {
+      "name": "startup-configuration",
+      "buildsystem": "simple",
+      "build-commands": [
+        "cargo --offline build --release --verbose --features flatpak",
+        "install -Dm0755 ./target/release/startup-configuration -t /app/bin/",
+        "install -Dm644 ./resources/icons/hicolor/scalable/apps/icon.svg /app/share/icons/hicolor/scalable/apps/best.ellie.StartupConfiguration.svg",
+        "install -Dm644 ./resources/app.metainfo.xml /app/share/metainfo/best.ellie.StartupConfiguration.metainfo.xml",
+        "install -Dm644 ./resources/app.desktop /app/share/applications/best.ellie.StartupConfiguration.desktop"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "./"
+        },
+        "./cargo-sources.json"
+      ]
+    }
+  ]
+}

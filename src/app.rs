@@ -2,10 +2,8 @@
 
 use std::cmp::PartialEq;
 use crate::apps::{get_installed_applications, get_startup_applications, DirectoryType};
-use crate::config::Config;
 use crate::fl;
 use cosmic::app::{context_drawer, Core, Task};
-use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::alignment::{Horizontal, Vertical};
 use cosmic::iced::{Alignment, Border, Color, Length, Subscription};
 use cosmic::iced_core::widget::Text;
@@ -25,8 +23,6 @@ const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps
 pub struct AppModel {
     /// Application state which is managed by the COSMIC runtime.
     core: Core,
-    // Configuration data that persists between application runs.
-    config: Config,
 
     context_page: ContextPage,
     application_search: String,
@@ -50,7 +46,6 @@ pub struct AppModel {
 #[derive(Debug, Clone)]
 pub enum Message {
     SubscriptionChannel,
-    UpdateConfig(Config),
     ToggleContextPage(ContextPage),
 
     ApplicationSearch(String),
@@ -130,12 +125,6 @@ impl Application for AppModel {
             locales: locales.clone(),
             installed_apps: get_installed_applications(locales),
             application_search: String::new(),
-            // Optional configuration file for an application.
-            config: cosmic_config::Config::new(Self::APP_ID, Config::VERSION)
-                .map(|context| {
-                    Config::get_entry(&context).unwrap_or_else(|(_errors, config)| config)
-                })
-                .unwrap_or_default(),
 
             apps_per_type: apps_hash,
 
@@ -277,16 +266,6 @@ impl Application for AppModel {
                     futures_util::future::pending().await
                 }),
             ),
-            // Watch for application configuration changes.
-            self.core()
-                .watch_config::<Config>(Self::APP_ID)
-                .map(|update| {
-                    // for why in update.errors {
-                    //     tracing::error!(?why, "app config error");
-                    // }
-
-                    Message::UpdateConfig(update.config)
-                }),
         ])
     }
 
@@ -298,9 +277,6 @@ impl Application for AppModel {
         match message {
             Message::SubscriptionChannel => {
                 // For example purposes only.
-            }
-            Message::UpdateConfig(config) => {
-                self.config = config;
             }
             Message::ToggleContextPage(context_page) => {
                 if self.context_page == context_page {

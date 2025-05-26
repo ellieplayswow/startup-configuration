@@ -28,6 +28,10 @@ impl Into<Vec<PathBuf>> for DirectoryType {
                         vec.push(PathBuf::from(dir).join(AUTOSTART));
                     }
                 } else {
+                    #[cfg(feature = "flatpak")]
+                    vec.push(PathBuf::from("/run/host/etc/xdg/").join(AUTOSTART));
+
+                    #[cfg(not(feature = "flatpak"))]
                     vec.push(PathBuf::from("/etc/xdg/").join(AUTOSTART));
                 }
 

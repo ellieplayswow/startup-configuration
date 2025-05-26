@@ -3,15 +3,28 @@
   <id>best.ellie.StartupConfiguration</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3</project_license>
+  <developer id="best.ellie">
+    <name>ellie</name>
+  </developer>
+  <url type="homepage">https://github.com/ellieplayswow/startup-configuration</url>
+  <url type="vcs-browser">https://github.com/ellieplayswow/startup-configuration</url>
+  <url type="contribute">https://github.com/ellieplayswow/startup-configuration</url>
+  <url type="translate">https://github.com/ellieplayswow/startup-configuration/tree/main/i18n</url>
+  <url type="bugtracker">https://github.com/ellieplayswow/startup-configuration/issues</url>
   <name>Startup Configuration</name>
   <summary>View and set startup scripts and applications</summary>
+  <description>
+    <p>
+      This is an application that allows you to view, manage, and add Freedesktop-compatible autostart entries to your
+      computer. It intends to trivialise managing and cleaning up your autostart directory
+    </p>
+  </description>
   <icon type="remote" width="64" height="64" scale="1">
     https://github.com/ellieplayswow/startup-configuration/raw/main/resources/icons/hicolor/scalable/apps/icon.svg
   </icon>
-  <url type="vcs-browser">https://github.com/ellieplayswow/startup-configuration</url>
   <launchable type="desktop-id">best.ellie.StartupConfiguration.desktop</launchable>
   <provides>
-    <id>best.ellie.StartupConfiguration</id>
+    <id>com.system76.CosmicApplication</id>
     <binaries>
       <binary>startup-configuration</binary>
     </binaries>
@@ -32,4 +45,3 @@
   </keywords>
   <content_rating type="oars-1.1" />
 </component>
-
