@@ -15,10 +15,12 @@
     "--device=dri",
     "--talk-name=com.system76.CosmicSettingsDaemon",
     "--filesystem=xdg-config/autostart:create",
-    "--filesystem=host-etc:ro",
-    "--filesystem=home:ro",
-    "--filesystem=xdg-data:ro",
-    "--filesystem=host-os:ro"
+    "--filesystem=host:ro",
+    "--filesystem=home/.local/share/applications:ro",
+    "--filesystem=home/.local/share/icons:ro",
+    "--filesystem=home/.local/share/flatpak/app:ro",
+    "--filesystem=/var/lib/flatpak/app:ro",
+    "--filesystem=/var/lib/snapd/desktop/applications:ro"
   ],
   "build-options": {
     "append-path": "/usr/lib/sdk/rust-stable/bin",
