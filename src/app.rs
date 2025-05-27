@@ -16,6 +16,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use cosmic::dialog::file_chooser::FileFilter;
+use cosmic::widget::icon::IconFallback;
+
 //const REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 const APP_ICON: &[u8] = include_bytes!("../resources/icons/hicolor/scalable/apps/icon.svg");
 
@@ -29,7 +31,7 @@ pub struct AppModel {
     application_search: String,
 
     locales: Vec<String>,
-    installed_apps: Vec<DesktopEntry>,
+    installed_apps: Option<Vec<DesktopEntry>>,
 
     apps_per_type: HashMap<DirectoryType, Vec<DesktopEntry>>,
 
@@ -124,7 +126,7 @@ impl Application for AppModel {
             core,
             context_page: ContextPage::default(),
             locales: locales.clone(),
-            installed_apps: get_installed_applications(locales),
+            installed_apps: None,
             application_search: String::new(),
 
             apps_per_type: apps_hash,
@@ -161,24 +163,27 @@ impl Application for AppModel {
                     .padding(theme::active().cosmic().space_xs())
                     .list_item_padding(0);
 
-                for application in self.installed_apps.iter() {
-                    if search_input.is_empty()
-                        || application
+                if let Some(installed_apps) = &self.installed_apps {
+                    for application in installed_apps {
+                        if search_input.is_empty()
+                            || application
                             .name(&freedesktop_desktop_entry::get_languages_from_env())
                             .unwrap_or("".into())
-                        .to_lowercase()
-                        .contains(search_input)
-                    {
-                        let mut app_name = application.clone().appid;
+                            .to_lowercase()
+                            .contains(search_input)
+                        {
+                            let mut app_name = application.clone().appid;
 
-                        if let Some(name) = &application.name(&self.locales) {
-                            app_name = name.to_string();
-                        }
+                            if let Some(name) = &application.name(&self.locales) {
+                                app_name = name.to_string();
+                            }
 
-                        let icon_name = application.icon().unwrap_or("application-default");
+                            let icon_name = application.icon().unwrap_or("application-default");
+                            let mut icon = icon::from_name(icon_name);
+                            icon.fallback = Some(IconFallback::Names(vec!["application-default".into()]));
 
-                        let app_item_row = cosmic::iced::widget::row![
-                            icon::from_name(icon_name).size(24),
+                            let app_item_row = cosmic::iced::widget::row![
+                            icon.size(24),
                             cosmic::iced::widget::column![
                                 widget::text::heading(app_name),
                                 exec_line(String::from(application.exec().unwrap_or("")))
@@ -187,10 +192,11 @@ impl Application for AppModel {
                             widget::button::text(fl!("actions", "add"))
                                 .on_press(Message::AddApplication(application.clone()))
                         ]
-                        .spacing(theme::active().cosmic().space_xs())
-                        .align_y(Vertical::Center);
+                                .spacing(theme::active().cosmic().space_xs())
+                                .align_y(Vertical::Center);
 
-                        list = list.add(app_item_row);
+                            list = list.add(app_item_row);
+                        }
                     }
                 }
 
@@ -291,6 +297,9 @@ impl Application for AppModel {
                 self.application_search = search;
             }
             Message::AddApplicationActivate(directory_type) => {
+                if self.installed_apps.is_none() {
+                    self.installed_apps = Some(get_installed_applications(self.locales.clone()));
+                }
                 self.selected_type = Some(directory_type);
                 return cosmic::task::message(Message::ToggleContextPage(ContextPage::AddApplication));
             }
@@ -559,10 +568,10 @@ Exec={:?}", file_name, path);
                                 .spacing(space_xs)
                                 .align_y(Alignment::Center);
 
-                            row = row.push(
-                                icon::from_name(app.icon().unwrap_or("application-default"))
-                                    .size(32),
-                            );
+                            let mut icon = icon::from_name(app.icon().unwrap_or("application-default"));
+                            icon.fallback = Some(IconFallback::Names(vec!["application-default".into()]));
+                            
+                            row = row.push(icon.size(32));
 
                             let mut name_col = column().align_x(Alignment::Start);
 
