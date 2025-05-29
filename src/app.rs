@@ -416,6 +416,7 @@ impl Application for AppModel {
                     .then(|result| async move {
                         return match result {
                             Ok(response) => {
+                                println!("{:?}", response.0);
                                 let Ok(path) = response.url().to_file_path() else {
                                     // @todo - error
                                     return Message::ChooseScriptCancel;
@@ -431,23 +432,67 @@ impl Application for AppModel {
                                     return Message::ChooseScriptCancel;
                                 };
 
-                                let entry_text = format!("[Desktop Entry]
-Type=Application
-Name={}
-Exec={:?}", file_name, path);
                                 let directories: Vec<PathBuf> = directory_type.clone().into();
 
                                 let directory_to_target = directories.get(0).expect("Always at least one directory");
-                                let mut desktop_file_name = file_name.to_string();
-                                desktop_file_name.push_str(".desktop");
-                                match std::fs::write(directory_to_target.join(desktop_file_name), entry_text) {
+
+                                // when bundled as a flatpak, we need to do a few creative things..
+                                // 1) write the script itself to `~/.config/autostart/` so it's in a
+                                // known location - flatpaks do not let us get the host path!
+                                // 2) set the script as +x
+                                #[cfg(feature = "flatpak")]
+                                match std::fs::write(directory_to_target.join(file_name), std::fs::read_to_string(path.clone()).expect("Should be able to read")) {
                                     Ok(_) => {
-                                        return Message::RefreshApps(directory_type);
+                                        let entry_text = format!("[Desktop Entry]
+Type=Application
+Name={}
+Exec=sh -c '~/.config/autostart/{}'", file_name, file_name);
+                                        let mut desktop_file_name = file_name.to_string();
+                                        desktop_file_name.push_str(".desktop");
+                                        match std::fs::write(directory_to_target.join(desktop_file_name), entry_text) {
+                                            Ok(_) => {
+                                                if let Ok(metadata) = fs::metadata(directory_to_target.join(file_name)) {
+                                                    use std::os::unix::fs::PermissionsExt;
+
+                                                    let mut permissions = metadata.permissions();
+                                                    permissions.set_mode(permissions.mode() | 0o111);
+                                                    if let Ok(_) = fs::set_permissions(
+                                                        directory_to_target.join(file_name),
+                                                        permissions
+                                                    ) {
+                                                        return Message::RefreshApps(directory_type);
+                                                    }
+                                                }
+
+                                            }
+                                            Err(err) => {
+                                                // @ todo - error
+                                            }
+                                        }
                                     }
                                     Err(err) => {
-                                        // @ todo - error
+                                        // @todo - error
                                     }
                                 }
+
+                                #[cfg(not(feature = "flatpak"))]
+                                {
+                                    let entry_text = format!("[Desktop Entry]
+Type=Application
+Name={}
+Exec={:?}", file_name, path);
+                                    let mut desktop_file_name = file_name.to_string();
+                                    desktop_file_name.push_str(".desktop");
+                                    match std::fs::write(directory_to_target.join(desktop_file_name), entry_text) {
+                                        Ok(_) => {
+                                            return Message::RefreshApps(directory_type);
+                                        }
+                                        Err(err) => {
+                                            // @ todo - error
+                                        }
+                                    }
+                                }
+
                                 Message::ChooseScriptCancel
                             }
                             Err(cosmic::dialog::file_chooser::Error::Cancelled) => {
@@ -483,7 +528,24 @@ Exec={:?}", file_name, path);
                         match popover_action {
                             PopoverMessage::ViewInFiles => {
                                 if let Some(dir) = &app.path.parent() {
-                                    let _ = open::that_detached(dir);
+                                    // when run as a flatpak, we need to de-sandbox the directory to try and guess
+                                    // the hosts' autostart directory
+                                    #[cfg(feature = "flatpak")]
+                                    if dir.starts_with("/home") && dir.components().any(|c| c.as_os_str() == ".var") {
+                                        if let Some(dir) = dir.as_os_str().to_str() {
+                                            if let Some(home_dir) = dir.split(".var").nth(0) {
+                                                showfile::show_path_in_file_manager(
+                                                    PathBuf::from(home_dir).join(".config/autostart")
+                                                );
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        showfile::show_path_in_file_manager(dir);
+                                    }
+
+                                    #[cfg(not(feature = "flatpak"))]
+                                    showfile::show_path_in_file_manager(dir);
                                 }
                                 
                             }
