@@ -93,3 +93,11 @@ vendor:
 vendor-extract:
     rm -rf vendor
     tar pxf vendor.tar
+
+flatpak-build:
+    flatpak run org.flatpak.Builder --force-clean --sandbox --user --install --install-deps-from=flathub --ccache --mirror-screenshots-url=https://dl.flathub.org/media/ --repo=repo flatpak-build best.ellie.StartupConfiguration.json
+
+flatpak-run:
+    flatpak run best.ellie.StartupConfiguration
+
+flatpak: flatpak-build flatpak-run
