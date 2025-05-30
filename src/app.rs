@@ -535,17 +535,19 @@ Exec={:?}", file_name, path);
                                         if let Some(dir) = dir.as_os_str().to_str() {
                                             if let Some(home_dir) = dir.split(".var").nth(0) {
                                                 showfile::show_path_in_file_manager(
-                                                    PathBuf::from(home_dir).join(".config/autostart")
+                                                    PathBuf::from(home_dir)
+                                                        .join(".config/autostart/")
+                                                        .join(app.path.file_name().expect("We should always have this")),
                                                 );
                                             }
                                         }
                                     }
                                     else {
-                                        showfile::show_path_in_file_manager(dir);
+                                        showfile::show_path_in_file_manager(&app.path);
                                     }
 
                                     #[cfg(not(feature = "flatpak"))]
-                                    showfile::show_path_in_file_manager(dir);
+                                    showfile::show_path_in_file_manager(&app.path);
                                 }
                                 
                             }
@@ -662,7 +664,6 @@ Exec={:?}", file_name, path);
                                     );
 
                                 if is_expanded {
-                                    println!("expanded");
                                     actions_row = actions_row.push(cosmic::widget::popover(more_button)
                                         .popup(column::with_children(vec![
                                             popover_item(idx, fl!("popover-menu", "view-in-files"), PopoverMessage::ViewInFiles),
