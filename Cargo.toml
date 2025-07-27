@@ -16,7 +16,7 @@ vergen = { version = "8", features = ["git", "gitcl"] }
 futures-util = "0.3.31"
 i18n-embed-fl = "0.9.2"
 rust-embed = "8.5.0"
-freedesktop-desktop-entry = "0.7.9"
+freedesktop-desktop-entry = "^0.7.10"
 dirs = "6.0.0"
 showfile = { version = "0.1.1", features = ["zbus"], default-features = false }
 
