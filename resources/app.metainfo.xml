@@ -62,6 +62,11 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="1.0.1" date="2025-09-01">
+      <description translate="no">
+        <p>Version 1.0.1: Fixing an issue where the "add application" button may not show</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2025-05-26">
       <description translate="no">
         <p>Version 1.0.0: Initial public release</p>
