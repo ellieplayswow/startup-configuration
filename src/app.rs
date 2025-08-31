@@ -709,28 +709,6 @@ Exec={:?}", file_name, path);
 
                     if valid_apps > 0 {
                         section = section.push(list_col);
-
-                        // @todo: get directory type
-                        if search_input.is_empty() && is_user {
-                            let controls = widget::container(
-                                row()
-                                    .spacing(space_xs)
-                                    .push(
-                                        button::standard(fl!("add-script")).trailing_icon(
-                                            icon::from_name("window-pop-out-symbolic"),
-                                        )
-                                            .on_press(Message::ChooseScriptActivate(directory_type.clone())),
-                                    )
-                                    .push(
-                                        button::suggested(fl!("add-application"))
-                                            .trailing_icon(icon::from_name("list-add-symbolic"))
-                                            .on_press(Message::AddApplicationActivate(directory_type.clone())),
-                                    ),
-                            )
-                            .width(Length::Fill)
-                            .align_x(Alignment::End);
-                            section = section.push(controls);
-                        }
                     } else {
                         section = section.push(
                             list_column()
@@ -749,6 +727,28 @@ Exec={:?}", file_name, path);
                             .align_x(Horizontal::Center),
                         ),
                     );
+                }
+
+                // @todo: get directory type
+                if search_input.is_empty() && is_user {
+                    let controls = widget::container(
+                        row()
+                            .spacing(space_xs)
+                            .push(
+                                button::standard(fl!("add-script")).trailing_icon(
+                                    icon::from_name("window-pop-out-symbolic"),
+                                )
+                                    .on_press(Message::ChooseScriptActivate(directory_type.clone())),
+                            )
+                            .push(
+                                button::suggested(fl!("add-application"))
+                                    .trailing_icon(icon::from_name("list-add-symbolic"))
+                                    .on_press(Message::AddApplicationActivate(directory_type.clone())),
+                            ),
+                    )
+                        .width(Length::Fill)
+                        .align_x(Alignment::End);
+                    section = section.push(controls);
                 }
             }
 
