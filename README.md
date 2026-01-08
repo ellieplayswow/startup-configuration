@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository has moved to [Codeberg](https://codeberg.org/ellie1337/startup-configuration). This repository remains as an archive.
+
 <div align="center">
     <img src="resources/icons/hicolor/scalable/apps/icon.svg" height="200" />
 </div>
